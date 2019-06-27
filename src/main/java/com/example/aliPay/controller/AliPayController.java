@@ -1,16 +1,20 @@
-package com.example.aliPay;/**
+package com.example.aliPay.controller;/**
  * ${tag}
  *
  * @author zhanghongjian
  * @Date 2019/6/25 17:42
  */
 
+import com.alibaba.fastjson.JSONObject;
 import com.alipay.api.AlipayApiException;
 import com.alipay.api.AlipayClient;
 import com.alipay.api.internal.util.AlipaySignature;
 import com.alipay.api.request.*;
+import com.example.aliPay.AlipayConfig;
+import com.example.aliPay.AlipayUtil;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -25,47 +29,37 @@ import java.util.Map;
  * @time：2019/6/25
  * @desc：PC端支付接口
  **/
-@Controller
+@RestController
 @RequestMapping("/ali")
 public class AliPayController {
 
     /**
      * @author：张鸿建
      * @date: 2019/6/26
-     * @desc: 支付
+     * @desc: 支付 String out_trade_no,String total_amount,String subject ,String body
      **/
     @RequestMapping("/pay")
-    public void payProcess(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    public String payProcess() throws ServletException, IOException {
         AlipayClient alipayClient = AlipayUtil.getAlipayClient();
         //创建API对应的request
         AlipayTradePagePayRequest alipayRequest = new AlipayTradePagePayRequest();
 
-        //商户订单号，商户网站订单系统中唯一订单号，必填
-        String out_trade_no = new String(request.getParameter("WIDout_trade_no").getBytes("ISO-8859-1"), "UTF-8");
-        //付款金额，必填
-        String total_amount = new String(request.getParameter("WIDtotal_amount").getBytes("ISO-8859-1"), "UTF-8");
-        //订单名称，必填
-        String subject = new String(request.getParameter("WIDsubject").getBytes("ISO-8859-1"), "UTF-8");
-        //商品描述，可空
-        String body = new String(request.getParameter("WIDbody").getBytes("ISO-8859-1"), "UTF-8");
-
         //在公共参数中设置回跳和通知地址
-        alipayRequest.setReturnUrl("http://domain.com/CallBack/return_url.jsp");
-        alipayRequest.setNotifyUrl("http://domain.com/CallBack/notify_url.jsp");
+        alipayRequest.setReturnUrl("http://25t49l5841.wicp.vip/ali/return");
+        alipayRequest.setNotifyUrl("http://25t49l5841.wicp.vip/ali/notify");
+        Map<String, Object> hashMap = new HashMap<String, Object>();
+        hashMap.put("out_trade_no",System.currentTimeMillis()+"");
+        hashMap.put("product_code","FAST_INSTANT_TRADE_PAY");
+        hashMap.put("total_amount",88.88);
+        hashMap.put("subject","Iphone6 16G");
+        hashMap.put("passback_params","merchantBizType%3d3C%26merchantBizNo%3d2016010101111");
+        hashMap.put("body","Iphone6 16G");
+        hashMap.put("extend_params",new HashMap<String,Object>().put("sys_service_provider_id","2088511833207846"));
 
         //请求参数可查阅【电脑网站支付的API文档-alipay.trade.page.pay-请求参数】章节
-        String content = "{" +
-                "    \"out_trade_no\":\"20150320010101001\"," +
-                "    \"product_code\":\"FAST_INSTANT_TRADE_PAY\"," +
-                "    \"total_amount\":88.88," +
-                "    \"subject\":\"Iphone6 16G\"," +
-                "    \"body\":\"Iphone6 16G\"," +
-                "    \"passback_params\":\"merchantBizType%3d3C%26merchantBizNo%3d2016010101111\"," +
-                "    \"extend_params\":{" +
-                "    \"sys_service_provider_id\":\"2088511833207846\"" +
-                "    }" +
-                "  }";
 
+        String content = JSONObject.toJSON(hashMap).toString();
+        System.out.println(content);
         alipayRequest.setBizContent(content);
         String form = "";
         try {
@@ -74,10 +68,7 @@ public class AliPayController {
         } catch (AlipayApiException e) {
             e.printStackTrace();
         }
-        response.setContentType("text/html;charset=" + "UTF-8");
-        response.getWriter().write(form);//直接将完整的表单html输出到页面
-        response.getWriter().flush();
-        response.getWriter().close();
+        return form;
     }
 
     /**
@@ -87,6 +78,7 @@ public class AliPayController {
      **/
     @RequestMapping("/notify")
     public String notifyMessage(HttpServletRequest request) throws Exception {
+        System.out.println("支付宝消息异步通知");
         Map<String, String> params = new HashMap<String, String>();
         Map<String, String[]> requestParams = request.getParameterMap();
         for (Iterator<String> iter = requestParams.keySet().iterator(); iter.hasNext(); ) {
@@ -103,7 +95,7 @@ public class AliPayController {
         }
 
         //将异步通知中收到的所有参数都存放到 map 中
-        boolean signVerified = AlipaySignature.rsaCheckV1(params, "", "UTF-8", ""); //调用SDK验证签名
+        boolean signVerified = AlipaySignature.rsaCheckV1(params, AlipayConfig.alipay_public_key, "UTF-8", AlipayConfig.sign_type); //调用SDK验证签名
         if (signVerified) {
             // TODO 验签成功后，按照支付结果异步通知中的描述，对支付结果中的业务内容进行二次校验，校验成功后在response中返回success并继续商户自身业务处理，校验失败返回failure
 

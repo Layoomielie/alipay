@@ -62,10 +62,42 @@ public class NotifyUrlController {
 
             //注：为了安全验签成功才应该写商户的成功处理逻辑】交易成功，更新商户订单状态
             //获取后台通知的数据，其他字段也可用类似方式获取
-            String orderId =valideData.get("orderId");
-            String respCode = valideData.get("respCode");
+            String orderId =valideData.get("orderId");  //商户订单号
+            String respCode = valideData.get("respCode"); //
 
-            //bizType  orderId  txnSubType traceNo accNo 银行卡号 settleAmt精确到分  settleDate 付款日期精确到天 queryId accessType respMsg traceTime txnTime merId respCode  txnAmt
+            //bizType   orderId  txnSubType traceNo accNo 银行卡号 settleAmt精确到分  settleDate 付款日期精确到天 queryId 查询流水号 accessType respMsg traceTime txnTime merId respCode  txnAmt
+            //txnTime 订单发送时间
+            //txnAmt 交易金额 精确到分
+            //txnSubType  01自助消费 03分期付款
+
+            //orderId 商户订单号
+            //orderDesc  订单描述
+            //customerInfo 银行卡验证信息  身份验证信息
+            //accNo 账号  卡号或卡号后四位
+            //orderTimeout 订单超时时间
+            //defaultPayType 默认支付方式
+            //payTimeout 支付超时时间
+
+            //queryId 查询流水号
+            //traceTime 交易传输时间 MMDDhhmmss
+            //signature 签名
+            //settleAmt 清算金额
+            // settleDate 清算日期
+            //traceNo 跟踪号
+            // respCode 应答码
+            // respMsg 应答信息
+            // accNo 账号
+            // payType 支付方式
+            // payCardNo 支付卡标识
+            // payCardType 支付卡类型
+                // payCardIssueName 支付卡名称
+            // txnTime 订单发送时间
+            // txnAmt 交易金额
+            // txnType 交易类型
+            // merId 商户代码
+            // orderId 商户订单号不能包含- _ merId orderId txnTime 确认一比交易
+
+
             System.out.println(orderId+respCode);
             System.out.println(JSONObject.toJSONString(valideData));
         }
